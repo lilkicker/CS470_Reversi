@@ -13,13 +13,13 @@ public class Heuristic {
 	public static int getHeuristicValue(int alreadyPlacedMove, int[][] newState, int myColor) {
 		int score = getPlayerScore(newState, myColor);
 		if(isCorner(alreadyPlacedMove)) {
-			score += 7;
+			score += 15;
 		}
 		else if(isNextToCorner(alreadyPlacedMove)) {
-			score -= 5;
+			score -= 10;
 		}
 		else if(isTwoAwayFromCorner(alreadyPlacedMove)) {
-			score += 2;
+			score += 3;
 		}
 		else if(isEdge(alreadyPlacedMove)) {
 			score += 1;
