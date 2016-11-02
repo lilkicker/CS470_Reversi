@@ -1,3 +1,4 @@
+import java.time.chrono.HijrahEra;
 import java.util.*;
 import java.lang.*;
 import java.io.*;
@@ -58,7 +59,7 @@ class Mine {
             //readMessage();
         //}
     }
-    private void printBoard(int[][] state){
+    public static void printBoard(int[][] state){
 
         for (int i = 7; i >= 0; i--) {
             for (int j = 0; j < 8; j++) {
@@ -73,7 +74,7 @@ class Mine {
 
         if (maxPlayer){
             if (depth == 0){
-                return Heuristic.getHeuristicValue(moveDet,state,me);
+                return Heuristic.getHeuristicValue(moveDet,state,opp);
             }
             int v = -10;
             List<Integer> vMoves = getValidMovesAB(state,me);
@@ -84,26 +85,23 @@ class Mine {
             for (Integer i : vMoves){
                 copy = copyState(state);
                 copy[i/8][i%8] = me;
-                copy = changeColors(moveDet/8,moveDet%8,me-1,copy);
+                copy = changeColors(i/8,i%8,me-1,copy);
                 v = Math.max(v, alphaBeta(copy,i,depth-1,alpha,beta,false));
                 alpha = Math.max(alpha,v);
                 if (beta <= alpha){
-                    return -1;
+                    break;
                 }
-                return v;
+
             }
+            return v;
 
 
         }else{
             if (depth == 0){
-
-                printBoard(state);
-                return Heuristic.getHeuristicValue(moveDet,state,opp);
+                return Heuristic.getHeuristicValue(moveDet,state,me);
             }
             int v = Integer.MAX_VALUE;
             List<Integer> vMoves = getValidMovesAB(state,opp);
-            printBoard(state);
-            System.out.println();
             if (vMoves.size() == 0){
 
                 return Heuristic.getHeuristicValue(moveDet,state,opp);
@@ -112,21 +110,16 @@ class Mine {
             for (Integer i : vMoves){
                 copy = copyState(state);
                 copy[i/8][i%8] = opp;
-                copy = changeColors(moveDet/8,moveDet%8,opp-1,copy);
-                printBoard(copy);
+                copy = changeColors(i/8,i%8,opp-1,copy);
                 v = Math.min(v, alphaBeta(copy,i,depth-1,alpha,beta,true));
                 beta = Math.min(beta,v);
                 if (beta <= alpha){
-                    return Integer.MAX_VALUE;
+                    break;
                 }
-                return v;
+
             }
+            return v;
         }
-
-
-
-
-        return 0;
     }
 
     public int[][] checkDirection(int row, int col, int incx, int incy, int player, int[][] state) {
@@ -252,18 +245,23 @@ class Mine {
                 if (Heuristic.isCorner(i)){
                     return index;
                 }
+
                 int[][] copy = copyState(state);
                 copy[i/8][i%8] = me;
                 copy = changeColors(i/8,i%8,me-1,copy);
-                int t = Math.max(v, alphaBeta(copy, i, 30, Integer.MIN_VALUE, Integer.MAX_VALUE, false));
+                int t = Math.max(v, alphaBeta(copy, i, 8, Integer.MIN_VALUE, Integer.MAX_VALUE, false));
+
                 if (t > v) {
                     myMove = index;
                     v = t;
                 }
                 index ++;
             }
-
+            if (Heuristic.isNextToCorner(vMoves.get(myMove))){
+                System.out.println();
+            }
         }
+
         return myMove;
     }
     
