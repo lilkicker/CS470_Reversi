@@ -40,7 +40,7 @@ class Mine {
             readMessage();
             
             if (turn == me) {
-                System.out.println("Move");
+                //System.out.println("Move");
                 getValidMoves(round, state);
                 
                 myMove = move();
@@ -68,7 +68,7 @@ class Mine {
             System.out.println();
         }
     }
-    private int alphaBeta(int[][] state,int moveDet, int depth, int alpha, int beta, boolean maxPlayer){
+    private int alphaBeta(int[][] state,int moveDet, int depth, int alpha, int beta, boolean maxPlayer, boolean forwardPrune){
         int copy[][];
 
 
@@ -84,8 +84,12 @@ class Mine {
             }
             for (Integer i : vMoves){
                 copy = copyState(state);
+                int score = Heuristic.getPlayerScore(copy,me);
                 copy[i/8][i%8] = me;
                 copy = changeColors(i/8,i%8,me-1,copy);
+                if(forwardPrune && Heuristic.getPlayerScore(copy,me) - score < 2){
+                	continue;
+                }
                 v = Math.max(v, alphaBeta(copy,i,depth-1,alpha,beta,false));
                 alpha = Math.max(alpha,v);
                 if (beta <= alpha){
@@ -109,8 +113,14 @@ class Mine {
 
             for (Integer i : vMoves){
                 copy = copyState(state);
+                int score = Heuristic.getPlayerScore(copy,opp);
+
                 copy[i/8][i%8] = opp;
                 copy = changeColors(i/8,i%8,opp-1,copy);
+                
+                if(forwardPrune && Heuristic.getPlayerScore(copy,opp) - score > 5){
+                	continue;
+                }
                 v = Math.min(v, alphaBeta(copy,i,depth-1,alpha,beta,true));
                 beta = Math.min(beta,v);
                 if (beta <= alpha){
@@ -249,7 +259,7 @@ class Mine {
                 int[][] copy = copyState(state);
                 copy[i/8][i%8] = me;
                 copy = changeColors(i/8,i%8,me-1,copy);
-                int t = Math.max(v, alphaBeta(copy, i, 8, Integer.MIN_VALUE, Integer.MAX_VALUE, false));
+                int t = Math.max(v, alphaBeta(copy, i, 8, Integer.MIN_VALUE, Integer.MAX_VALUE, false,true));
 
                 if (t > v) {
                     myMove = index;
@@ -257,9 +267,9 @@ class Mine {
                 }
                 index ++;
             }
-            if (Heuristic.isNextToCorner(vMoves.get(myMove))){
+            /*if (Heuristic.isNextToCorner(vMoves.get(myMove))){
                 System.out.println();
-            }
+            }*/
         }
 
         return myMove;
@@ -287,20 +297,20 @@ class Mine {
                 validMoves[numValidMoves] = 4*8 + 4;
                 numValidMoves ++;
             }
-            System.out.println("Valid Moves:");
-            for (i = 0; i < numValidMoves; i++) {
-                System.out.println(validMoves[i] / 8 + ", " + validMoves[i] % 8);
-            }
+            //System.out.println("Valid Moves:");
+            //for (i = 0; i < numValidMoves; i++) {
+                //System.out.println(validMoves[i] / 8 + ", " + validMoves[i] % 8);
+            //}
         }
         else {
-            System.out.println("Valid Moves:");
+            //System.out.println("Valid Moves:");
             for (i = 0; i < 8; i++) {
                 for (j = 0; j < 8; j++) {
                     if (state[i][j] == 0) {
                         if (couldBe(state, i, j,me)) {
                             validMoves[numValidMoves] = i*8 + j;
                             numValidMoves ++;
-                            System.out.println(i + ", " + j);
+                            //System.out.println(i + ", " + j);
                         }
                     }
                 }
@@ -386,9 +396,9 @@ class Mine {
             //System.out.println("Turn: " + turn);
             round = Integer.parseInt(sin.readLine());
             t1 = Double.parseDouble(sin.readLine());
-            System.out.println(t1);
+            //System.out.println(t1);
             t2 = Double.parseDouble(sin.readLine());
-            System.out.println(t2);
+            //System.out.println(t2);
             for (i = 0; i < 8; i++) {
                 for (j = 0; j < 8; j++) {
                     state[i][j] = Integer.parseInt(sin.readLine());
@@ -399,7 +409,7 @@ class Mine {
             System.err.println("Caught IOException: " + e.getMessage());
         }
         
-        System.out.println("Turn: " + turn);
+        /*System.out.println("Turn: " + turn);
         System.out.println("Round: " + round);
         for (i = 7; i >= 0; i--) {
             for (j = 0; j < 8; j++) {
@@ -407,7 +417,7 @@ class Mine {
             }
             System.out.println();
         }
-        System.out.println();
+        System.out.println();*/
     }
     
     public void initClient(String host) {
@@ -419,7 +429,7 @@ class Mine {
 			sin = new BufferedReader(new InputStreamReader(s.getInputStream()));
             
             String info = sin.readLine();
-            System.out.println(info);
+            //System.out.println(info);
         } catch (IOException e) {
             System.err.println("Caught IOException: " + e.getMessage());
         }
