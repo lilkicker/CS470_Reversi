@@ -7,8 +7,8 @@ import java.net.*;
 class Mine {
 
     public Socket s;
-	public BufferedReader sin;
-	public PrintWriter sout;
+    public BufferedReader sin;
+    public PrintWriter sout;
     Random generator = new Random();
 
     double t1, t2;
@@ -18,11 +18,11 @@ class Mine {
     int state[][] = new int[8][8]; // state[0][0] is the bottom left corner of the board (on the GUI)
     int turn = -1;
     int round;
-    
+
     int validMoves[] = new int[64];
     int numValidMoves;
-    
-    
+
+
     // main function that (1) establishes a connection with the server, and then plays whenever it is this player's turn
     public Mine(int _me, String host) {
         me = _me;
@@ -34,29 +34,29 @@ class Mine {
         initClient(host);
 
         int myMove;
-        
+
         while (true) {
             System.out.println("Read");
             readMessage();
-            
+
             if (turn == me) {
-                //System.out.println("Move");
+                System.out.println("Move");
                 getValidMoves(round, state);
-                
+
                 myMove = move();
                 //myMove = generator.nextInt(numValidMoves);        // select a move randomly
-                
+
                 String sel = validMoves[myMove] / 8 + "\n" + validMoves[myMove] % 8;
-                
+
                 System.out.println("Selection: " + validMoves[myMove] / 8 + ", " + validMoves[myMove] % 8);
-                
+
                 sout.println(sel);
             }
         }
         //while (turn == me) {
         //    System.out.println("My turn");
-            
-            //readMessage();
+
+        //readMessage();
         //}
     }
     public static void printBoard(int[][] state){
@@ -80,7 +80,7 @@ class Mine {
             List<Integer> vMoves = getValidMovesAB(state,me);
             if (vMoves.size() == 0){
 
-                return Heuristic.getHeuristicValue(moveDet,state,me);
+                return Heuristic.getHeuristicValue(moveDet,state,opp);
             }
             for (Integer i : vMoves){
                 copy = copyState(state);
@@ -88,9 +88,9 @@ class Mine {
                 copy[i/8][i%8] = me;
                 copy = changeColors(i/8,i%8,me-1,copy);
                 if(forwardPrune && Heuristic.getPlayerScore(copy,me) - score < 2){
-                	continue;
+                    continue;
                 }
-                v = Math.max(v, alphaBeta(copy,i,depth-1,alpha,beta,false));
+                v = Math.max(v, alphaBeta(copy,i,depth-1,alpha,beta,false,forwardPrune));
                 alpha = Math.max(alpha,v);
                 if (beta <= alpha){
                     break;
@@ -108,20 +108,18 @@ class Mine {
             List<Integer> vMoves = getValidMovesAB(state,opp);
             if (vMoves.size() == 0){
 
-                return Heuristic.getHeuristicValue(moveDet,state,opp);
+                return Heuristic.getHeuristicValue(moveDet,state,me);
             }
 
             for (Integer i : vMoves){
                 copy = copyState(state);
                 int score = Heuristic.getPlayerScore(copy,opp);
-
                 copy[i/8][i%8] = opp;
                 copy = changeColors(i/8,i%8,opp-1,copy);
-                
-                if(forwardPrune && Heuristic.getPlayerScore(copy,opp) - score > 5){
-                	continue;
+                if(forwardPrune && Heuristic.getPlayerScore(copy,opp) - score > 4){
+                    continue;
                 }
-                v = Math.min(v, alphaBeta(copy,i,depth-1,alpha,beta,true));
+                v = Math.min(v, alphaBeta(copy,i,depth-1,alpha,beta,true,forwardPrune));
                 beta = Math.min(beta,v);
                 if (beta <= alpha){
                     break;
@@ -259,7 +257,7 @@ class Mine {
                 int[][] copy = copyState(state);
                 copy[i/8][i%8] = me;
                 copy = changeColors(i/8,i%8,me-1,copy);
-                int t = Math.max(v, alphaBeta(copy, i, 8, Integer.MIN_VALUE, Integer.MAX_VALUE, false,true));
+                int t = Math.max(v, alphaBeta(copy, i, 8, Integer.MIN_VALUE, Integer.MAX_VALUE, false,false));
 
                 if (t > v) {
                     myMove = index;
@@ -267,18 +265,18 @@ class Mine {
                 }
                 index ++;
             }
-            /*if (Heuristic.isNextToCorner(vMoves.get(myMove))){
+            if (Heuristic.isNextToCorner(vMoves.get(myMove))){
                 System.out.println();
-            }*/
+            }
         }
 
         return myMove;
     }
-    
+
     // generates the set of valid moves for the player; returns a list of valid moves (validMoves)
     private void getValidMoves(int round, int state[][]) {
         int i, j;
-        
+
         numValidMoves = 0;
         if (round < 4) {
             if (state[3][3] == 0) {
@@ -297,44 +295,44 @@ class Mine {
                 validMoves[numValidMoves] = 4*8 + 4;
                 numValidMoves ++;
             }
-            //System.out.println("Valid Moves:");
-            //for (i = 0; i < numValidMoves; i++) {
-                //System.out.println(validMoves[i] / 8 + ", " + validMoves[i] % 8);
-            //}
+            System.out.println("Valid Moves:");
+            for (i = 0; i < numValidMoves; i++) {
+                System.out.println(validMoves[i] / 8 + ", " + validMoves[i] % 8);
+            }
         }
         else {
-            //System.out.println("Valid Moves:");
+            System.out.println("Valid Moves:");
             for (i = 0; i < 8; i++) {
                 for (j = 0; j < 8; j++) {
                     if (state[i][j] == 0) {
                         if (couldBe(state, i, j,me)) {
                             validMoves[numValidMoves] = i*8 + j;
                             numValidMoves ++;
-                            //System.out.println(i + ", " + j);
+                            System.out.println(i + ", " + j);
                         }
                     }
                 }
             }
         }
     }
-    
+
     private boolean checkDirection(int state[][], int row, int col, int incx, int incy, int me) {
         int sequence[] = new int[7];
         int seqLen;
         int i, r, c;
-        
+
         seqLen = 0;
         for (i = 1; i < 8; i++) {
             r = row+incy*i;
             c = col+incx*i;
-        
+
             if ((r < 0) || (r > 7) || (c < 0) || (c > 7))
                 break;
-        
+
             sequence[seqLen] = state[r][c];
             seqLen++;
         }
-        
+
         int count = 0;
         for (i = 0; i < seqLen; i++) {
             if (me == 1) {
@@ -356,49 +354,49 @@ class Mine {
                 }
             }
         }
-        
+
         return false;
     }
-    
+
     private boolean couldBe(int state[][], int row, int col, int me) {
         int incx, incy;
-        
+
         for (incx = -1; incx < 2; incx++) {
             for (incy = -1; incy < 2; incy++) {
                 if ((incx == 0) && (incy == 0))
                     continue;
-            
+
                 if (checkDirection(state, row, col, incx, incy, me))
                     return true;
             }
         }
-        
+
         return false;
     }
-    
+
     public void readMessage() {
         int i, j;
         String status;
         try {
             //System.out.println("Ready to read again");
             turn = Integer.parseInt(sin.readLine());
-            
+
             if (turn == -999) {
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException e) {
                     System.out.println(e);
                 }
-                
+
                 System.exit(1);
             }
-            
+
             //System.out.println("Turn: " + turn);
             round = Integer.parseInt(sin.readLine());
             t1 = Double.parseDouble(sin.readLine());
-            //System.out.println(t1);
+            System.out.println(t1);
             t2 = Double.parseDouble(sin.readLine());
-            //System.out.println(t2);
+            System.out.println(t2);
             for (i = 0; i < 8; i++) {
                 for (j = 0; j < 8; j++) {
                     state[i][j] = Integer.parseInt(sin.readLine());
@@ -408,8 +406,8 @@ class Mine {
         } catch (IOException e) {
             System.err.println("Caught IOException: " + e.getMessage());
         }
-        
-        /*System.out.println("Turn: " + turn);
+
+        System.out.println("Turn: " + turn);
         System.out.println("Round: " + round);
         for (i = 7; i >= 0; i--) {
             for (j = 0; j < 8; j++) {
@@ -417,25 +415,25 @@ class Mine {
             }
             System.out.println();
         }
-        System.out.println();*/
+        System.out.println();
     }
-    
+
     public void initClient(String host) {
         int portNumber = 3333+me;
-        
+
         try {
-			s = new Socket(host, portNumber);
+            s = new Socket(host, portNumber);
             sout = new PrintWriter(s.getOutputStream(), true);
-			sin = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            
+            sin = new BufferedReader(new InputStreamReader(s.getInputStream()));
+
             String info = sin.readLine();
-            //System.out.println(info);
+            System.out.println(info);
         } catch (IOException e) {
             System.err.println("Caught IOException: " + e.getMessage());
         }
     }
 
-    
+
     // compile on your machine: javac *.java
     // call: java RandomGuy [ipaddress] [player_number]
     //   ipaddress is the ipaddress on the computer the server was launched on.  Enter "localhost" if it is on the same computer
@@ -443,5 +441,5 @@ class Mine {
     public static void main(String args[]) {
         new Mine(Integer.parseInt(args[1]), args[0]);
     }
-    
+
 }
